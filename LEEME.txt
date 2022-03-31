@@ -1,0 +1,36 @@
+AMPLIACIONES REALIZADAS.
+
+-COLORES
+Una ampliación pequeña en la que le pongo colores a las cosas que muestra el terminal.
+Simplemente delante de cada printf que hago pongo un  puts("\e[96m");  el número que le paso indica el color
+que imprimirá el siguiente printf. Si el número fuese 0 se imprimirá el color por defecto.
+
+-GUARDAR CONFIGURACIÓN DE SHELL
+Para que se pueda ejecutar correctamente el script que nos han subido en el cv "termios" el cual modifica la
+configuración del shell, se debe de implementar unas funciones. 
+Antes de entrar en el bucle:
+shell_terminal = STDIN_FILENO;    con esto leo la configuracion del terminal.
+tcgetattr(shell_terminal, &conf);   y guardo la configuracion del terminal
+tcsetattr(shell_terminal, TCSANOW, &conf);   con esta se restaura
+Entonces despues de que en el proceso en foreground que hace el termios, el terminal lo vuelva a recuperar la shell
+pues con tcsetattr(shell_terminal, TCSANOW, &conf);  hacemos que vuelva la configuración que tenía la shell antes
+de que se ejecutara el ./termios
+
+-RESPAWNABLE
+Para este caso he añadido en el getCommand la opcion de que le pase un # poniendo la variable background a 2 para diferenciarlo luego.
+En el state he añadido el estado respawnable que cogería estos procesos. La estructura de job_ también le he añadido un char que es el argumento
+del comando que introduzcamos. Entonces simplemente creo un void para respawnear un proceso, o sea, lo vuelvo a ejecutar. Pero esta ejecucion 
+solo se ejecutara si dentro del manejador(my_sigchld) el estado del job es de respawnable. Entonces el proceso muere pero vuelve a ejecutarse, hasta
+que le hago un fg o un bg que ya el estado cambiaría.
+
+job_control.c -> nuevo trabajo añadir el argumento
+
+-TIME-OUT
+Añadimos un entero tiempo a la estructura de job que tambien lo añadimos a la funcion de add_job. En todos los add_job que no tienen que ver con el time-out
+le pongo 0 porque no lo vamos a usar. He hecho una funcion alarmaThread la cual envia la señal sigalrm y que luego bloquea el thread en un segundo. 
+Un manejador para sigalarm el cual va recorriendo la lista de jobs que hay y que si el tiempo es 0 pasa al sigueinte, si es uno lo elimina(pues ya se ha pasado el tiempo)
+y si es mas de 1 se va restando.
+Al escribir el comando time-out actuamos como cuando vamos a crear un proceso salvo que ahora para crear el job el arg que le pasamos
+es arg[2] (este es el nombre del comando) arg 1 seria el tiempo y arg 0 seria time-out.
+
+
